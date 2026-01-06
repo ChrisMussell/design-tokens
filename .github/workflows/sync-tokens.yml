@@ -1,0 +1,36 @@
+name: Sync Tokens to Design System
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tokens.json'
+
+jobs:
+  sync-tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout design-tokens repo
+        uses: actions/checkout@v4
+        with:
+          path: design-tokens
+
+      - name: Checkout design-system-preview repo
+        uses: actions/checkout@v4
+        with:
+          repository: ChrisMussell/design-system-preview
+          token: ${{ secrets.SYNC_TOKEN }}
+          path: design-system-preview
+
+      - name: Copy tokens.json
+        run: |
+          cp design-tokens/tokens.json design-system-preview/src/tokens/tokens.json
+
+      - name: Commit and push to design-system-preview
+        run: |
+          cd design-system-preview
+          git config user.name "Token Sync Bot"
+          git config user.email "bot@github.com"
+          git add src/tokens/tokens.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🔄 Auto-sync tokens from Figma" && git push)
